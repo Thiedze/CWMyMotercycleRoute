@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">CWMyMotorCycleRoute</string>
+    <string name="add_route">Route hinzufügen</string>
+    <string name="current_position">Aktuelle Position</string>
+    <string name="end_location">München</string>
+    <string name="start_location">Bocholt</string>
+    <string name="start_routing">Route berechnen</string>
+    <string name="title_activity_main">CWMyMotorcycleRoute</string>
+    <string name="title_activity_maps">CWMyMotorcycleRoute</string>
+    <string name="end_location_label">Zielort</string>
+    <string name="start_location_label">Startort</string>
+</resources>

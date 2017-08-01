@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">CWMyMotorCycleRoute</string>
+    <string name="title_activity_main">CWMyMotorcycleRoute</string>
+    <string name="add_route">Add Route</string>
+    <string name="current_position">Current Position</string>
+    <string name="start_location">Bocholt</string>
+    <string name="end_location">München</string>
+    <string name="start_routing">Start Routing</string>
+    <string name="title_activity_maps">CWMyMotorcycleRoute</string>
+    <string name="start_location_label">Start Location</string>
+    <string name="end_location_label">End location</string>
+</resources>

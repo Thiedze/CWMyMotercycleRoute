@@ -30,3 +30,11 @@ proguard/
 
 # Android Studio captures folder
 captures/
+
+\.idea/
+
+app/src/debug/res/values/google_maps_api\.xml
+
+app/src/release/res/values/google_maps_api\.xml
+
+app/src/test/java/cw/de/cwmymotercycleroute/ExampleUnitTest\.java
