@@ -3,14 +3,10 @@ package cw.de.cwmymotercycleroute;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.location.Address;
-import android.location.Criteria;
-import android.location.Geocoder;
-import android.location.Location;
-import android.location.LocationManager;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.os.StrictMode;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -18,20 +14,22 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
 
-import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.util.List;
 
 public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback {
 
-    private GoogleMap maps;
+    private final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 0;
 
-    private final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1;
+    private GoogleMaps googleMaps;
+
+    private GoogleMapsDirection googleMapsDirection;
+
+    private Weather weather;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,55 +43,39 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
-    }
 
-    private void showCurrentPosition() {
-        try {
-            maps.setMyLocationEnabled(true);
-            LocationManager service = (LocationManager) getSystemService(LOCATION_SERVICE);
-            Criteria criteria = new Criteria();
-            String provider = service.getBestProvider(criteria, false);
-            Location location = service.getLastKnownLocation(provider);
-            LatLng userLocation = new LatLng(location.getLatitude(), location.getLongitude());
+        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+        StrictMode.setThreadPolicy(policy);
 
-            maps.addMarker(new MarkerOptions().position(userLocation).title("@string/current_position"));
-            maps.moveCamera(CameraUpdateFactory.newLatLng(userLocation));
-
-            maps.setMinZoomPreference(6.0f);
-            maps.setMaxZoomPreference(14.0f);
-        } catch (SecurityException exception) {
-            Toast.makeText(this, exception.getCause().toString(), Toast.LENGTH_LONG);
-        } catch (Exception exception) {
-            Toast.makeText(this, exception.getCause().toString(), Toast.LENGTH_LONG);
-        }
+        googleMaps = new GoogleMaps(this);
+        googleMapsDirection = new GoogleMapsDirection(this);
+        weather = new Weather(this);
     }
 
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
-        maps = googleMap;
+        googleMaps.setMaps(googleMap);
 
-
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED ||
-                ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this,
                     new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
                     PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
         } else {
-            showCurrentPosition();
+            googleMaps.showCurrentPosition();
         }
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode,
-                                           String permissions[], int[] grantResults) {
+                                           @NonNull String permissions[], @NonNull int[] grantResults) {
         switch (requestCode) {
             case PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION: {
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    showCurrentPosition();
+                    googleMaps.showCurrentPosition();
                 }
-                return;
+                break;
             }
         }
     }
@@ -106,19 +88,25 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        try {
-            switch (item.getItemId()) {
-                case R.id.add_route:
-                    Intent intent = new Intent(this, SetLocationActivity.class);
-                    this.startActivity(intent);
-                    break;
-                default:
-                    return super.onOptionsItemSelected(item);
-            }
-        } catch (Exception exception) {
-            Toast.makeText(this, exception.getCause().toString(), Toast.LENGTH_LONG);
+        switch (item.getItemId()) {
+            case R.id.add_route:
+                Intent intent = new Intent(this, SetLocationActivity.class);
+                this.startActivityForResult(intent, 0);
+                break;
+            default:
+                return super.onOptionsItemSelected(item);
         }
         return true;
+    }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        List<WayPoint> wayPoints = googleMapsDirection.getWayPoints(new LatLng(data.getDoubleExtra("latStartLocation", 0.0), data.getDoubleExtra("longStartLocation", 0.0)),
+                new LatLng(data.getDoubleExtra("latEndLocation", 0.0), data.getDoubleExtra("longEndLocation", 0.0)));
+
+        wayPoints = weather.addWeatherInformations(wayPoints);
+        googleMaps.showWayPoints(wayPoints);
     }
 }
